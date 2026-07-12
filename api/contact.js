@@ -1,10 +1,8 @@
 // api/contact.js — Vercel serverless function
-// Saves contact form submissions to PostgreSQL `contacts` table
-
-import { sql } from '@vercel/postgres';
+import pkg from 'pg';
+const { Client } = pkg;
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,9 +16,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Name, email and message are required' });
   }
 
+  const client = new Client({
+    connectionString: process.env.POSTGRES_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
   try {
-    // Create table if it doesn't exist yet
-    await sql`
+    await client.connect();
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS contacts (
         id           SERIAL PRIMARY KEY,
         name         TEXT NOT NULL,
@@ -29,16 +33,18 @@ export default async function handler(req, res) {
         message      TEXT NOT NULL,
         submitted_at TIMESTAMPTZ DEFAULT NOW()
       )
-    `;
+    `);
 
-    await sql`
-      INSERT INTO contacts (name, email, service, message)
-      VALUES (${name}, ${email}, ${service || null}, ${message})
-    `;
+    await client.query(
+      `INSERT INTO contacts (name, email, service, message) VALUES ($1, $2, $3, $4)`,
+      [name, email, service || null, message]
+    );
 
-    return res.status(200).json({ success: true, message: 'Message received' });
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error('Contact DB error:', err);
     return res.status(500).json({ error: 'Database error. Please try again.' });
+  } finally {
+    await client.end();
   }
 }

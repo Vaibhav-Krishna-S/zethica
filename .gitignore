@@ -9,3 +9,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Environment variables — never commit these
+.env
+.env.local
+.env*.local
+node_modules/
