@@ -79,7 +79,7 @@ function showToast(message, duration = 4000) {
   setTimeout(() => toast.classList.remove('show'), duration);
 }
 
-// ─── CONTACT FORM — Formspree submission ─────────────────────────────────────
+// ─── CONTACT FORM — Formspree + PostgreSQL ───────────────────────────────────
 const contactForm = document.getElementById('contactForm');
 
 contactForm.addEventListener('submit', async (e) => {
@@ -94,21 +94,36 @@ contactForm.addEventListener('submit', async (e) => {
   btn.textContent = 'Sending...';
   btn.disabled = true;
 
+  const payload = {
+    name:    document.getElementById('name').value.trim(),
+    email:   document.getElementById('email').value.trim(),
+    service: document.getElementById('service').value,
+    message: document.getElementById('message').value.trim()
+  };
+
   try {
-    const response = await fetch(contactForm.action, {
+    // Send to Formspree (email notification to zethica@outlook.com)
+    const formspreeRes = await fetch(contactForm.action, {
       method: 'POST',
       body: new FormData(contactForm),
       headers: { 'Accept': 'application/json' }
     });
 
-    if (response.ok) {
+    // Save to PostgreSQL database
+    await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (formspreeRes.ok) {
       btn.textContent = 'Message Sent';
       btn.style.background = 'linear-gradient(135deg, #0F6E56, #13A87E)';
       showToast('Message sent. We\'ll get back to you within a few hours.');
       contactForm.reset();
     } else {
-      const data = await response.json();
-      const errorMsg = data?.errors?.map(e => e.message).join(', ') || 'Something went wrong.';
+      const data = await formspreeRes.json();
+      const errorMsg = data?.errors?.map(err => err.message).join(', ') || 'Something went wrong.';
       btn.textContent = 'Try Again';
       btn.style.background = 'linear-gradient(135deg, #b91c1c, #dc2626)';
       showToast('Error: ' + errorMsg);
@@ -126,31 +141,50 @@ contactForm.addEventListener('submit', async (e) => {
   }, 4000);
 });
 
-// ─── WAITLIST FORM ────────────────────────────────────────────────────────────
+// ─── WAITLIST FORM — PostgreSQL ───────────────────────────────────────────────
 const waitlistForm = document.getElementById('waitlistForm');
 
-waitlistForm.addEventListener('submit', (e) => {
+waitlistForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const btn = waitlistForm.querySelector('button');
-  const input = waitlistForm.querySelector('input');
+  const input = document.getElementById('waitlistEmail');
   const originalText = btn.textContent;
+  const email = input.value.trim();
 
   btn.textContent = 'Joining...';
   btn.disabled = true;
 
-  setTimeout(() => {
-    btn.textContent = '✓ You\'re In!';
-    btn.style.background = 'linear-gradient(135deg, #059669, #10B981)';
-    showToast('You\'re on the AI waitlist. We\'ll notify you first when it launches.');
+  try {
+    const res = await fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
 
-    setTimeout(() => {
-      btn.textContent = originalText;
-      btn.style.background = '';
-      btn.disabled = false;
+    const data = await res.json();
+
+    if (res.ok) {
+      btn.textContent = 'You\'re In';
+      btn.style.background = 'linear-gradient(135deg, #0F6E56, #13A87E)';
+      showToast('You\'re on the AI waitlist. We\'ll notify you first when it launches.');
       input.value = '';
-    }, 3000);
-  }, 1200);
+    } else {
+      btn.textContent = 'Try Again';
+      btn.style.background = 'linear-gradient(135deg, #b91c1c, #dc2626)';
+      showToast(data.error || 'Something went wrong. Please try again.');
+    }
+  } catch (err) {
+    btn.textContent = 'Try Again';
+    btn.style.background = 'linear-gradient(135deg, #b91c1c, #dc2626)';
+    showToast('Network error. Please try again.');
+  }
+
+  setTimeout(() => {
+    btn.textContent = originalText;
+    btn.style.background = '';
+    btn.disabled = false;
+  }, 4000);
 });
 
 // ─── ACTIVE NAV HIGHLIGHT ON SCROLL ──────────────────────────────────────────
@@ -185,40 +219,6 @@ window.addEventListener('mousemove', (e) => {
     orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
   });
 }, { passive: true });
-
-// ─── COUNTER ANIMATION ────────────────────────────────────────────────────────
-function animateCounter(el, target, suffix = '') {
-  let current = 0;
-  const increment = Math.ceil(target / 60);
-  const timer = setInterval(() => {
-    current += increment;
-    if (current >= target) {
-      current = target;
-      clearInterval(timer);
-    }
-    el.textContent = current + suffix;
-  }, 25);
-}
-
-const statsObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const statNums = entry.target.querySelectorAll('.stat-num');
-      statNums.forEach(num => {
-        const text = num.textContent;
-        if (text.includes('150')) animateCounter(num, 150, '+');
-        if (text.includes('50')) animateCounter(num, 50, '+');
-        if (text.includes('5★')) {
-          // Keep as-is
-        }
-      });
-      statsObserver.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.5 });
-
-const heroStats = document.querySelector('.hero-stats');
-if (heroStats) statsObserver.observe(heroStats);
 
 // ─── SERVICE CARD TILT EFFECT ─────────────────────────────────────────────────
 document.querySelectorAll('.service-card, .ai-card').forEach(card => {
