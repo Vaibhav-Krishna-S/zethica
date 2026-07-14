@@ -1,0 +1,39 @@
+{
+  "name": "ZETHICA — One Partner. Every Digital Need.",
+  "short_name": "ZETHICA",
+  "description": "ZETHICA is an AI-powered digital studio helping businesses build websites, branding, automation and digital solutions.",
+  "start_url": "https://zethica.online/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0F6E56",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "design"],
+  "screenshots": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

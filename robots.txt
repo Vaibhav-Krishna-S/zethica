@@ -1,0 +1,20 @@
+# Robots.txt for ZETHICA
+User-agent: *
+Allow: /
+Allow: /logo.png
+Allow: /favicon.svg
+Allow: /site.webmanifest
+Allow: /api/
+
+Disallow: /.git/
+Disallow: /.env
+Disallow: /node_modules/
+
+# Sitemap
+Sitemap: https://zethica.online/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1
+
+# Request rate (requests per second)
+Request-rate: 10/1s
