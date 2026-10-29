@@ -102,11 +102,67 @@ function checkRateLimit(ip) {
 }
 
 // ============================================================================
-// DATABASE SEARCH
+// DATABASE SEARCH (Two-Phase Retrieval with Fallback)
 // ============================================================================
+
+// Conservative stop-word list for filtering insignificant terms
+// Used only in Phase 2 OR fallback query
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+  'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
+  'being', 'have', 'has', 'had', 'do', 'does', 'did', 'can', 'could',
+  'should', 'would', 'will', 'shall', 'may', 'might', 'must', 'how',
+  'what', 'when', 'where', 'why', 'who', 'whom', 'which', 'that', 'this',
+  'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'him',
+  'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their'
+]);
+
+// Helper to build OR query from user input
+// Removes stop words, normalizes tokens, and joins with | operator
+// Returns empty string if no significant terms remain
+function buildOrQuery(query) {
+  // Validate input
+  if (!query || typeof query !== 'string') {
+    return '';
+  }
+
+  const trimmedQuery = query.trim();
+  if (trimmedQuery.length === 0) {
+    return '';
+  }
+
+  // Extract words (alphanumeric sequences)
+  const terms = trimmedQuery
+    .toLowerCase()
+    .match(/\b\w+\b/g) || [];
+
+  if (terms.length === 0) {
+    return '';
+  }
+
+  // Filter: remove stop words and duplicates
+  const significantTerms = [];
+  const seen = new Set();
+
+  for (const term of terms) {
+    if (!STOP_WORDS.has(term) && !seen.has(term)) {
+      significantTerms.push(term);
+      seen.add(term);
+    }
+  }
+
+  // Return empty if all terms were stop words
+  if (significantTerms.length === 0) {
+    return '';
+  }
+
+  // Join with OR operator for to_tsquery
+  return significantTerms.join(' | ');
+}
 
 async function searchKnowledge(client, query) {
   try {
+    // PHASE 1: Strict AND query (current behavior, unchanged)
     const result = await client.query(
       `SELECT 
          chunk_id,
@@ -121,7 +177,34 @@ async function searchKnowledge(client, query) {
       [query, SEARCH_RESULT_LIMIT]
     );
 
-    return result.rows;
+    // If Phase 1 found results, return them (preserve all working queries)
+    if (result.rows.length > 0) {
+      return result.rows;
+    }
+
+    // PHASE 2: OR fallback (only if Phase 1 returned zero chunks)
+    const orQuery = buildOrQuery(query);
+    
+    // If no significant terms remain after stop-word filtering, return empty
+    if (!orQuery) {
+      return [];
+    }
+
+    const fallbackResult = await client.query(
+      `SELECT 
+         chunk_id,
+         source_file,
+         section_heading,
+         subsection_heading,
+         chunk_content
+       FROM knowledge_chunks
+       WHERE content_tsvector @@ to_tsquery('english', $1)
+       ORDER BY ts_rank(content_tsvector, to_tsquery('english', $1)) DESC
+       LIMIT $2`,
+      [orQuery, SEARCH_RESULT_LIMIT]
+    );
+
+    return fallbackResult.rows;
   } catch (err) {
     console.error('Knowledge search error:', err.message);
     throw new Error('Database error');

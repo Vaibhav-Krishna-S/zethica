@@ -147,9 +147,13 @@ class ZethicaChatWidget {
               maxlength="2000"
               aria-label="Chat message input"
               aria-describedby="zcw-char-count"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
             />
             <span id="zcw-char-count" class="zcw-char-count" aria-live="polite">0 / 2000</span>
-            <button class="zcw-send-btn" id="zcw-send-btn" aria-label="Send message" title="Send (or press Enter)">
+            <button class="zcw-send-btn" id="zcw-send-btn" aria-label="Send message" title="Send (or press Enter)" type="button">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 C22.9702544,11.6889879 22.9702544,11.6889879 22.9702544,11.6889879 L4.13399899,1.16034022 C3.34915502,0.9 2.40734225,1.00636533 1.77946707,1.4776575 C0.994623095,2.10604706 0.837654326,3.0486314 1.15159189,3.97821575 L3.03521743,10.4192088 C3.03521743,10.5763061 3.19218622,10.7334035 3.50612381,10.7334035 L16.6915026,11.5188905 C16.6915026,11.5188905 17.1624089,11.5188905 17.1624089,11.0476283 L17.1624089,12.0902126 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
               </svg>
@@ -160,7 +164,7 @@ class ZethicaChatWidget {
       </div>
 
       <!-- Toggle button (floating launcher) -->
-      <button class="zcw-launcher" id="zcw-launcher" aria-label="Open ZETHICA chat" title="Chat with ZETHICA AI">
+      <button class="zcw-launcher" id="zcw-launcher" aria-label="Open ZETHICA chat" title="Chat with ZETHICA AI" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
         </svg>
@@ -182,6 +186,18 @@ class ZethicaChatWidget {
     this.closeOverlayEl = this.widgetEl.querySelector('#zcw-backdrop');
     this.rateLimitUIEl = this.widgetEl.querySelector('.zcw-rate-limit-notice');
     this.rateLimitTimerEl = this.widgetEl.querySelector('#zcw-rate-limit-counter');
+
+    // Prevent body scroll when chat is open on mobile
+    this.preventBodyScroll = (e) => {
+      if (this.isOpen && window.innerWidth <= 640) {
+        document.body.style.overflow = 'hidden';
+      }
+    };
+
+    // Restore body scroll when chat is closed
+    this.restoreBodyScroll = () => {
+      document.body.style.overflow = '';
+    };
   }
 
   /**
@@ -190,15 +206,34 @@ class ZethicaChatWidget {
   attachEventListeners() {
     // Launcher toggle
     this.toggleBtnEl.addEventListener('click', () => this.toggle());
+    this.toggleBtnEl.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      this.toggle();
+    });
 
     // Close button in header
-    this.widgetEl.querySelector('.zcw-close-btn').addEventListener('click', () => this.close());
+    const closeBtn = this.widgetEl.querySelector('.zcw-close-btn');
+    closeBtn.addEventListener('click', () => this.close());
+    closeBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      this.close();
+    });
 
     // Backdrop click (mobile)
     this.closeOverlayEl.addEventListener('click', () => this.close());
+    this.closeOverlayEl.addEventListener('touchend', (e) => {
+      if (e.target === this.closeOverlayEl) {
+        e.preventDefault();
+        this.close();
+      }
+    });
 
     // Send button
     this.sendBtnEl.addEventListener('click', () => this.sendMessage());
+    this.sendBtnEl.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      this.sendMessage();
+    });
 
     // Enter to send, Shift+Enter for new line
     this.inputEl.addEventListener('keydown', (e) => {
@@ -227,7 +262,32 @@ class ZethicaChatWidget {
         this.inputEl.focus();
         this.sendMessage();
       });
+
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        const message = btn.getAttribute('data-message');
+        this.inputEl.value = message;
+        this.inputEl.focus();
+        this.sendMessage();
+      });
     });
+
+    // Handle window resize for responsive behavior
+    window.addEventListener('resize', () => {
+      if (!this.isOpen) return;
+      // If screen size changes to desktop while panel is open, keep it open
+      // If screen size changes to mobile, keep it open with full-screen mode
+    });
+
+    // Prevent pinch zoom on mobile (optional, but helps with stability)
+    document.addEventListener('touchmove', (e) => {
+      if (this.isOpen && e.target.closest('#zethica-chat-widget')) {
+        // Allow pinch zoom within the widget
+        if (e.touches.length > 1) {
+          // Allow default behavior for multi-touch (pinch zoom)
+        }
+      }
+    }, { passive: false });
   }
 
   /**
@@ -252,6 +312,12 @@ class ZethicaChatWidget {
     this.inputEl.focus();
     this.unreadCount = 0;
     this.unreadBadgeEl.style.display = 'none';
+
+    // Prevent background scroll on mobile
+    if (window.innerWidth <= 640) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    }
   }
 
   /**
@@ -262,6 +328,12 @@ class ZethicaChatWidget {
     const panel = this.widgetEl.querySelector('.zcw-panel');
     panel.setAttribute('aria-hidden', 'true');
     this.widgetEl.classList.remove('zcw-open');
+
+    // Restore background scroll on mobile
+    if (window.innerWidth <= 640) {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
   }
 
   /**

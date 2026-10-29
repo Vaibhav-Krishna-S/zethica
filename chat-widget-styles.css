@@ -563,60 +563,148 @@
 }
 
 /* ---------- MOBILE RESPONSIVE ---------- */
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .zcw-container {
     --zcw-launcher-bottom: 16px;
     --zcw-launcher-right: 16px;
+    --zcw-panel-width: 100vw;
+    --zcw-panel-height: 100vh;
     bottom: var(--zcw-launcher-bottom);
     right: var(--zcw-launcher-right);
   }
 
   .zcw-panel {
-    width: calc(100vw - 32px);
-    height: calc(100vh - 80px);
-    max-width: var(--zcw-panel-width);
-    bottom: auto;
-    top: 50%;
-    right: 50%;
-    transform: translate(50%, -50%) scale(0.95);
+    /* Full viewport on mobile */
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    bottom: 0;
+    right: 0;
+    top: 0;
+    left: 0;
+    border-radius: 0;
+    transform: translateY(100vh) scale(1);
+    z-index: 0;
   }
 
   .zcw-container.zcw-open .zcw-panel {
-    transform: translate(50%, -50%) scale(1);
+    transform: translateY(0) scale(1);
+    z-index: 2;
   }
 
   .zcw-launcher {
-    width: 48px;
-    height: 48px;
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    z-index: 9998;
   }
 
   .zcw-launcher svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .zcw-user .zcw-message-text,
   .zcw-message.zcw-assistant .zcw-message-text,
   .zcw-sources {
-    max-width: 90%;
+    max-width: 85%;
   }
 
   .zcw-quick-actions {
     flex-direction: row;
     flex-wrap: wrap;
+    gap: 6px;
   }
 
   .zcw-quick-btn {
-    flex: 1;
-    min-width: 80px;
+    flex: 1 1 calc(50% - 3px);
+    min-width: 70px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .zcw-header {
+    padding: 12px 16px;
+  }
+
+  .zcw-messages {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .zcw-input-area {
+    padding: 10px 12px;
+    border-top: 1px solid var(--zcw-border);
+  }
+
+  .zcw-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 6px;
+  }
+
+  .zcw-message-text {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .zcw-sources {
+    font-size: 11px;
+    padding: 6px;
+    max-width: 85%;
+  }
+}
+
+/* ---------- SMALL PHONE RESPONSIVE ---------- */
+@media (max-width: 480px) {
+  .zcw-container {
+    --zcw-launcher-bottom: 12px;
+    --zcw-launcher-right: 12px;
+  }
+
+  .zcw-launcher {
+    width: 52px;
+    height: 52px;
+  }
+
+  .zcw-header-text h3 {
+    font-size: 15px;
+  }
+
+  .zcw-quick-btn {
+    flex: 1 1 calc(50% - 2px);
+    min-width: 60px;
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+
+  .zcw-message {
+    gap: 6px;
+  }
+
+  .zcw-message-text {
+    font-size: 13px;
+    padding: 8px 10px;
+    line-height: 1.4;
   }
 }
 
 /* ---------- TABLET RESPONSIVE ---------- */
-@media (max-width: 768px) {
+@media (min-width: 641px) and (max-width: 1024px) {
   .zcw-container {
-    --zcw-panel-width: 340px;
-    --zcw-panel-height: 500px;
+    --zcw-panel-width: 360px;
+    --zcw-panel-height: 540px;
+  }
+}
+
+/* ---------- LARGE SCREENS ---------- */
+@media (min-width: 1025px) {
+  .zcw-container {
+    --zcw-panel-width: 380px;
+    --zcw-panel-height: 600px;
   }
 }
 
