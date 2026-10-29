@@ -24,7 +24,6 @@ class ZethicaChatWidget {
     this.isOpen = false;
     this.messages = [];
     this.isLoading = false;
-    this.unreadCount = 0;
 
     // Rate limiting (per session, per IP rate limit is on backend)
     this.requestTimestamps = [];
@@ -172,7 +171,6 @@ class ZethicaChatWidget {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
         </svg>
-        <span class="zcw-badge" id="zcw-badge" style="display: none;" aria-label="Unread messages">0</span>
       </button>
 
       <!-- Backdrop overlay (for mobile) -->
@@ -186,7 +184,6 @@ class ZethicaChatWidget {
     this.sendBtnEl = this.widgetEl.querySelector('#zcw-send-btn');
     this.messagesContainerEl = this.widgetEl.querySelector('.zcw-messages');
     this.toggleBtnEl = this.widgetEl.querySelector('#zcw-launcher');
-    this.unreadBadgeEl = this.widgetEl.querySelector('#zcw-badge');
     this.closeOverlayEl = this.widgetEl.querySelector('#zcw-backdrop');
     this.rateLimitUIEl = this.widgetEl.querySelector('.zcw-rate-limit-notice');
     this.rateLimitTimerEl = this.widgetEl.querySelector('#zcw-rate-limit-counter');
@@ -314,8 +311,6 @@ class ZethicaChatWidget {
     panel.setAttribute('aria-hidden', 'false');
     this.widgetEl.classList.add('zcw-open');
     this.inputEl.focus();
-    this.unreadCount = 0;
-    this.unreadBadgeEl.style.display = 'none';
 
     // Prevent background scroll on mobile
     if (window.innerWidth <= 640) {
@@ -522,13 +517,6 @@ class ZethicaChatWidget {
 
     this.messagesContainerEl.appendChild(msgEl);
     this.scrollMessagesToBottom();
-
-    // Increment unread if widget is closed and message is from assistant
-    if (!this.isOpen && sender === 'assistant') {
-      this.unreadCount++;
-      this.unreadBadgeEl.textContent = this.unreadCount;
-      this.unreadBadgeEl.style.display = 'flex';
-    }
   }
 
   /**
