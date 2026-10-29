@@ -18,8 +18,11 @@
 
   position: fixed;
   z-index: 9999;
-  bottom: var(--zcw-launcher-bottom);
-  right: var(--zcw-launcher-right);
+  bottom: 0;
+  right: 0;
+  top: 0;
+  left: 0;
+  pointer-events: none;
   font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
@@ -54,9 +57,9 @@
 
 /* ---------- LAUNCHER BUTTON ---------- */
 .zcw-launcher {
-  position: absolute;
-  bottom: 0;
-  right: 0;
+  position: fixed;
+  bottom: var(--zcw-launcher-bottom);
+  right: var(--zcw-launcher-right);
   width: var(--zcw-launcher-size);
   height: var(--zcw-launcher-size);
   border-radius: 50%;
@@ -69,7 +72,8 @@
   justify-content: center;
   box-shadow: 0 4px 20px rgba(15, 110, 86, 0.35);
   transition: all var(--zcw-transition);
-  z-index: 1;
+  z-index: 10000;
+  pointer-events: auto;
 }
 
 .zcw-launcher:hover {
@@ -112,9 +116,9 @@
 
 /* ---------- CHAT PANEL ---------- */
 .zcw-panel {
-  position: absolute;
-  bottom: calc(var(--zcw-launcher-size) + 16px);
-  right: 0;
+  position: fixed;
+  bottom: var(--zcw-launcher-size);
+  right: var(--zcw-launcher-right);
   width: var(--zcw-panel-width);
   height: var(--zcw-panel-height);
   background: var(--zcw-bg-panel);
@@ -127,15 +131,17 @@
   visibility: hidden;
   transform: translateY(12px) scale(0.95);
   transition: all var(--zcw-transition);
-  z-index: 0;
+  z-index: 9999;
   color: var(--zcw-text-primary);
+  pointer-events: none;
 }
 
 .zcw-container.zcw-open .zcw-panel {
   opacity: 1;
   visibility: visible;
   transform: translateY(0) scale(1);
-  z-index: 2;
+  z-index: 10001;
+  pointer-events: auto;
 }
 
 /* ---------- HEADER ---------- */
@@ -551,7 +557,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity var(--zcw-transition), visibility var(--zcw-transition);
-  z-index: 0;
+  z-index: 9998;
   pointer-events: none;
 }
 
@@ -559,7 +565,7 @@
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  z-index: 1;
+  z-index: 9998;
 }
 
 /* ---------- MOBILE RESPONSIVE ---------- */
@@ -567,10 +573,6 @@
   .zcw-container {
     --zcw-launcher-bottom: 16px;
     --zcw-launcher-right: 16px;
-    --zcw-panel-width: 100vw;
-    --zcw-panel-height: 100vh;
-    bottom: var(--zcw-launcher-bottom);
-    right: var(--zcw-launcher-right);
   }
 
   .zcw-panel {
@@ -586,12 +588,10 @@
     left: 0;
     border-radius: 0;
     transform: translateY(100vh) scale(1);
-    z-index: 0;
   }
 
   .zcw-container.zcw-open .zcw-panel {
     transform: translateY(0) scale(1);
-    z-index: 2;
   }
 
   .zcw-launcher {
@@ -600,7 +600,7 @@
     right: 16px;
     width: 56px;
     height: 56px;
-    z-index: 9998;
+    z-index: 10000;
   }
 
   .zcw-launcher svg {
@@ -668,6 +668,8 @@
   .zcw-launcher {
     width: 52px;
     height: 52px;
+    bottom: 12px;
+    right: 12px;
   }
 
   .zcw-header-text h3 {
@@ -739,4 +741,24 @@
   .zcw-launcher {
     border: 2px solid white;
   }
+}
+
+/* Ensure launcher is always on top and visible */
+#zethica-chat-widget .zcw-launcher {
+  position: fixed !important;
+  bottom: var(--zcw-launcher-bottom) !important;
+  right: var(--zcw-launcher-right) !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  display: flex !important;
+}
+
+/* Ensure container doesn't block pointer events for launcher */
+#zethica-chat-widget {
+  pointer-events: none;
+}
+
+#zethica-chat-widget * {
+  pointer-events: auto;
 }

@@ -53,6 +53,10 @@ class ZethicaChatWidget {
     this.attachEventListeners();
     this.syncTheme();
 
+    // Log for debugging
+    console.log('[ZETHICA Chat Widget] Initialized successfully');
+    console.log('[ZETHICA Chat Widget] Launcher button visible:', this.toggleBtnEl && this.toggleBtnEl.offsetParent !== null);
+
     // Listen for theme changes from site theme toggle
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
