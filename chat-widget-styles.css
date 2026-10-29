@@ -461,7 +461,7 @@
 
 /* ---------- INPUT AREA ---------- */
 .zcw-input-area {
-  padding: 12px 16px;
+  padding: 10px 12px 12px 12px;
   border-top: 1px solid var(--zcw-border);
   background: var(--zcw-bg-panel);
   flex-shrink: 0;
@@ -477,15 +477,15 @@
   gap: 8px;
   background: var(--zcw-input-bg);
   border: 1px solid var(--zcw-border);
-  border-radius: 24px;
-  padding: 6px 8px;
-  transition: border-color var(--zcw-transition);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
   position: relative;
 }
 
 .zcw-input-wrapper:focus-within {
-  border-color: var(--zcw-accent);
-  box-shadow: 0 0 0 2px rgba(15, 110, 86, 0.1);
+  border-color: var(--zcw-border);
+  box-shadow: none;
 }
 
 .zcw-input {
@@ -493,14 +493,15 @@
   border: none;
   background: transparent;
   color: var(--zcw-text-primary);
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
-  padding: 8px;
+  padding: 8px 4px;
   outline: none;
   resize: none;
   min-height: 40px;
   display: block;
   width: 100%;
+  line-height: 1.4;
 }
 
 .zcw-input::placeholder {
@@ -508,32 +509,26 @@
 }
 
 .zcw-char-count {
-  font-size: 11px;
-  color: var(--zcw-text-muted);
-  white-space: nowrap;
-  margin-right: 4px;
-  flex-shrink: 0;
+  display: none;
 }
 
 .zcw-send-btn {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: var(--zcw-accent);
   color: white;
-  border-radius: 50%;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all var(--zcw-transition);
-  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
 .zcw-send-btn:hover:not(:disabled) {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(15, 110, 86, 0.4);
+  opacity: 0.9;
 }
 
 .zcw-send-btn:active:not(:disabled) {
@@ -541,8 +536,7 @@
 }
 
 .zcw-send-btn:focus {
-  outline: 2px solid var(--zcw-accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .zcw-send-btn:disabled {
@@ -551,8 +545,8 @@
 }
 
 .zcw-send-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 /* ---------- BACKDROP OVERLAY ---------- */
@@ -634,16 +628,38 @@
 
   /* Ensure input area is always visible at bottom */
   .zcw-input-area {
-    padding: 10px 12px;
+    padding: 8px 10px 12px 10px;
     border-top: 1px solid var(--zcw-border);
     flex-shrink: 0;
     position: relative;
     z-index: 15;
   }
 
+  .zcw-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--zcw-input-bg);
+    border: 1px solid var(--zcw-border);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+
   .zcw-input {
     font-size: 16px; /* Prevents zoom on iOS */
-    padding: 6px;
+    padding: 6px 4px;
+    min-height: 38px;
+  }
+
+  .zcw-send-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 5px;
+  }
+
+  .zcw-send-btn svg {
+    width: 16px;
+    height: 16px;
   }
 
   .zcw-user .zcw-message-text,
@@ -710,6 +726,31 @@
     font-size: 13px;
     padding: 8px 10px;
     line-height: 1.4;
+  }
+
+  .zcw-input-area {
+    padding: 6px 8px 10px 8px;
+  }
+
+  .zcw-input-wrapper {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .zcw-input {
+    font-size: 16px;
+    padding: 4px 2px;
+    min-height: 36px;
+  }
+
+  .zcw-send-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .zcw-send-btn svg {
+    width: 14px;
+    height: 14px;
   }
 }
 
