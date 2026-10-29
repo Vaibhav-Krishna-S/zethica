@@ -46,12 +46,12 @@ function loadSystemPrompt() {
 
   try {
     // Resolve path relative to this file (api/chat.js)
-    // Workspace structure:
+    // Repository structure:
     // zethica/api/chat.js (this file)
-    // Serverside_Instruction/SYSTEM_PROMPT.md
-    // So: go up 2 levels from api/, then into Serverside_Instruction/
+    // zethica/server/SYSTEM_PROMPT.md (server-only, included in Vercel deployment)
+    // So: go up 1 level from api/, then into server/
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const promptPath = path.resolve(__dirname, '../../Serverside_Instruction/SYSTEM_PROMPT.md');
+    const promptPath = path.resolve(__dirname, '../server/SYSTEM_PROMPT.md');
     
     if (!fs.existsSync(promptPath)) {
       console.error(`System prompt not found at: ${promptPath}`);
