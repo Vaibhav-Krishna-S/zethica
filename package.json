@@ -5,5 +5,8 @@
   "type": "module",
   "dependencies": {
     "pg": "^8.13.3"
+  },
+  "scripts": {
+    "build:vercel": "node scripts/build-static.js"
   }
 }
