@@ -469,6 +469,57 @@ class ZethicaChatWidget {
   }
 
   /**
+   * Render Markdown text to HTML with sanitization
+   * @param {string} text - Markdown text to render
+   * @returns {string} Sanitized HTML
+   */
+  renderMarkdown(text) {
+    // Only render as markdown for assistant messages (avoid rendering user asterisks as markdown)
+    if (!window.marked) {
+      // Fallback if marked library not loaded: escape HTML and render as plain text
+      const escaped = document.createElement('div');
+      escaped.textContent = text;
+      return escaped.innerHTML;
+    }
+
+    try {
+      // Configure marked for security and readability
+      window.marked.setOptions({
+        breaks: true,
+        gfm: true,
+        headerIds: false,
+      });
+
+      // Render markdown
+      let html = window.marked(text);
+
+      // Sanitize HTML using DOMPurify if available
+      if (window.DOMPurify) {
+        // Configure DOMPurify to allow reasonable formatting
+        const config = {
+          ALLOWED_TAGS: [
+            'p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'ul', 'ol', 'li', 'blockquote',
+            'a', 'table', 'thead', 'tbody', 'tr', 'td', 'th'
+          ],
+          ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+          FORCE_BODY: false,
+        };
+        html = window.DOMPurify.sanitize(html, config);
+      }
+
+      return html;
+    } catch (error) {
+      console.error('[Chat Widget] Markdown rendering error:', error);
+      // Fallback to escaped text on error
+      const escaped = document.createElement('div');
+      escaped.textContent = text;
+      return escaped.innerHTML;
+    }
+  }
+
+  /**
    * Add a user or assistant message to the chat
    * @param {string} sender - 'user', 'assistant', or 'system'
    * @param {string} text - Message text
@@ -478,10 +529,19 @@ class ZethicaChatWidget {
     const msgEl = document.createElement('div');
     msgEl.className = `zcw-message zcw-${sender}`;
 
-    // Build content safely (no innerHTML for user content)
+    // Build content
     const contentDiv = document.createElement('div');
     contentDiv.className = 'zcw-message-text';
-    contentDiv.textContent = text; // Safe: textContent, not innerHTML
+
+    // For assistant messages, render markdown; for user messages, use plain text
+    if (sender === 'assistant' && window.marked) {
+      contentDiv.innerHTML = this.renderMarkdown(text);
+      // Add classes for markdown-rendered content styling
+      contentDiv.classList.add('zcw-markdown');
+    } else {
+      // User and system messages: safe plain text
+      contentDiv.textContent = text;
+    }
 
     msgEl.appendChild(contentDiv);
 
