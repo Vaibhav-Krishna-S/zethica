@@ -51,6 +51,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="chat-widget-styles.css" />
+  <link rel="stylesheet" href="welcome-audio-styles.css" />
   
   <!-- JSON-LD Organization Schema -->
   <script type="application/ld+json">
@@ -218,6 +219,60 @@
       <div class="hero-actions">
         <a href="#services" class="btn btn-primary btn-lg">Explore Services</a>
         <a href="#contact" class="btn btn-ghost btn-lg">Let's Talk →</a>
+      </div>
+
+      <!-- ========== WELCOME AUDIO PLAYER ========== -->
+      <div id="zethica-welcome-player">
+        <div class="zethica-audio-visual">
+          <div class="zethica-audio-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 3.54a9 9 0 0 1 0 12.72M19.07 4.93a13.998 13.998 0 0 1 0 18.14"></path>
+            </svg>
+          </div>
+          <div id="zethica-welcome-soundwave">
+            <div class="soundwave-bar"></div>
+            <div class="soundwave-bar"></div>
+            <div class="soundwave-bar"></div>
+            <div class="soundwave-bar"></div>
+            <div class="soundwave-bar"></div>
+          </div>
+        </div>
+        
+        <div class="zethica-audio-text">
+          <span class="zethica-audio-label">Hear our welcome</span>
+          <span id="zethica-welcome-status">Ready to play</span>
+        </div>
+        
+        <div class="zethica-audio-controls">
+          <button id="zethica-welcome-play" class="zethica-audio-btn" aria-label="Play audio" title="Play">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </button>
+          
+          <button id="zethica-welcome-pause" class="zethica-audio-btn hidden" aria-label="Pause audio" title="Pause">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          </button>
+          
+          <button id="zethica-welcome-replay" class="zethica-audio-btn" aria-label="Replay audio" title="Replay">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+          
+          <button id="zethica-welcome-mute" class="zethica-audio-btn" aria-label="Mute audio" title="Mute">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -651,5 +706,6 @@
 
   <script src="script.js"></script>
   <script src="chat-widget.js"></script>
+  <script src="welcome-audio.js"></script>
 </body>
-</html>
+</html>>
