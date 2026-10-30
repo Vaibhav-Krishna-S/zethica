@@ -221,12 +221,12 @@ async function callOpenRouter(systemPrompt, userMessage, retrievedContext) {
 
   if (!apiKey) {
     console.error('Missing OPENROUTER_API_KEY');
-    throw new Error('Configuration error');
+    throw { code: 'MISSING_CONFIG', message: 'OpenRouter API key not configured' };
   }
 
   if (!model) {
     console.error('Missing OPENROUTER_MODEL');
-    throw new Error('Configuration error');
+    throw { code: 'MISSING_CONFIG', message: 'OpenRouter model not configured' };
   }
 
   // Build the user message with context
@@ -277,16 +277,21 @@ async function callOpenRouter(systemPrompt, userMessage, retrievedContext) {
       const errorData = await response.text();
       console.error(`OpenRouter API error: ${response.status} ${errorData.substring(0, 100)}`);
 
+      // Classify error for fallback decision
       if (response.status === 429) {
-        throw new Error('Rate limited');
+        throw { code: 'RATE_LIMIT', status: 429, message: 'Rate limited' };
+      } else if (response.status === 503 || response.status === 502) {
+        throw { code: 'SERVICE_UNAVAILABLE', status: response.status, message: 'Service temporarily unavailable' };
+      } else if (response.status === 500) {
+        throw { code: 'SERVER_ERROR', status: 500, message: 'Server error' };
       } else if (response.status === 401) {
         console.error('Invalid API key');
-        throw new Error('Authentication error');
+        throw { code: 'AUTH_ERROR', status: 401, message: 'Authentication error' };
       } else if (response.status === 400) {
         console.error('Invalid request to OpenRouter');
-        throw new Error('Invalid model or request');
+        throw { code: 'INVALID_REQUEST', status: 400, message: 'Invalid request' };
       } else {
-        throw new Error('LLM service error');
+        throw { code: 'LLM_ERROR', status: response.status, message: 'LLM service error' };
       }
     }
 
@@ -294,16 +299,180 @@ async function callOpenRouter(systemPrompt, userMessage, retrievedContext) {
 
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       console.error('Unexpected OpenRouter response format');
-      throw new Error('Invalid response format');
+      throw { code: 'INVALID_RESPONSE', message: 'Invalid response format' };
     }
 
     return data.choices[0].message.content;
   } catch (err) {
     if (err.name === 'AbortError') {
       console.error('OpenRouter API request timeout');
-      throw new Error('Request timeout');
+      throw { code: 'TIMEOUT', message: 'Request timeout' };
     }
-    throw err;
+    // Re-throw with error code if already classified
+    if (err.code) {
+      throw err;
+    }
+    throw { code: 'NETWORK_ERROR', message: err.message || 'Network error' };
+  }
+}
+
+// ============================================================================
+// GEMINI API CALL (Fallback Provider)
+// ============================================================================
+
+async function callGemini(systemPrompt, userMessage, retrievedContext) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const model = process.env.GEMINI_MODEL;
+
+  if (!apiKey) {
+    console.error('Missing GEMINI_API_KEY');
+    throw { code: 'MISSING_CONFIG', message: 'Gemini API key not configured' };
+  }
+
+  if (!model) {
+    console.error('Missing GEMINI_MODEL');
+    throw { code: 'MISSING_CONFIG', message: 'Gemini model not configured' };
+  }
+
+  const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+  // Build the user message with context (same as OpenRouter)
+  let userContent = userMessage;
+  if (retrievedContext.length > 0) {
+    const contextText = retrievedContext
+      .map(chunk => chunk.chunk_content)
+      .join('\n\n---\n\n');
+    userContent = `Based on this company knowledge:\n\n${contextText}\n\nPlease answer: ${userMessage}`;
+  } else {
+    userContent = `Please answer this question about ZETHICA. If the knowledge base does not contain the answer, say so and suggest contacting the team: ${userMessage}`;
+  }
+
+  const requestBody = {
+    contents: [
+      {
+        parts: [
+          { text: systemPrompt },
+          { text: userContent }
+        ]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 500
+    }
+  };
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), OPENROUTER_API_TIMEOUT);
+
+    const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error(`Gemini API error: ${response.status} ${errorData.substring(0, 100)}`);
+
+      // Classify error
+      if (response.status === 429) {
+        throw { code: 'RATE_LIMIT', status: 429, message: 'Rate limited' };
+      } else if (response.status === 503 || response.status === 502) {
+        throw { code: 'SERVICE_UNAVAILABLE', status: response.status, message: 'Service unavailable' };
+      } else if (response.status === 500) {
+        throw { code: 'SERVER_ERROR', status: 500, message: 'Server error' };
+      } else if (response.status === 401 || response.status === 403) {
+        console.error('Invalid Gemini API key');
+        throw { code: 'AUTH_ERROR', status: response.status, message: 'Authentication error' };
+      } else if (response.status === 400) {
+        console.error('Invalid request to Gemini');
+        throw { code: 'INVALID_REQUEST', status: 400, message: 'Invalid request' };
+      } else {
+        throw { code: 'LLM_ERROR', status: response.status, message: 'LLM service error' };
+      }
+    }
+
+    const data = await response.json();
+
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('Unexpected Gemini response format');
+      throw { code: 'INVALID_RESPONSE', message: 'Invalid response format' };
+    }
+
+    // Extract text from Gemini response
+    const parts = data.candidates[0].content.parts;
+    if (!parts || parts.length === 0) {
+      throw { code: 'INVALID_RESPONSE', message: 'No content in response' };
+    }
+
+    return parts.map(part => part.text).join('');
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      console.error('Gemini API request timeout');
+      throw { code: 'TIMEOUT', message: 'Request timeout' };
+    }
+    // Re-throw with error code if already classified
+    if (err.code) {
+      throw err;
+    }
+    throw { code: 'NETWORK_ERROR', message: err.message || 'Network error' };
+  }
+}
+
+// ============================================================================
+// DUAL PROVIDER HANDLER WITH FALLBACK
+// ============================================================================
+
+async function callLLMWithFallback(systemPrompt, userMessage, retrievedContext) {
+  let provider = 'openrouter';
+  
+  try {
+    // Try OpenRouter first (primary provider)
+    const reply = await callOpenRouter(systemPrompt, userMessage, retrievedContext);
+    console.log('Provider: OpenRouter — Success');
+    return { reply, provider: 'openrouter' };
+  } catch (err) {
+    console.error(`OpenRouter failed (${err.code}): ${err.message}`);
+    
+    // Determine if fallback is appropriate
+    const shouldFallback = [
+      'RATE_LIMIT',
+      'SERVICE_UNAVAILABLE',
+      'SERVER_ERROR',
+      'TIMEOUT',
+      'NETWORK_ERROR'
+    ].includes(err.code);
+
+    if (!shouldFallback) {
+      // Don't fall back for auth errors, config errors, invalid requests
+      console.error(`OpenRouter error not eligible for fallback: ${err.code}`);
+      throw err;
+    }
+
+    // Check if Gemini is configured
+    if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_MODEL) {
+      console.warn('Gemini not configured, cannot fallback');
+      throw err;
+    }
+
+    console.log('Falling back to Gemini provider...');
+
+    try {
+      // Try Gemini as fallback
+      const reply = await callGemini(systemPrompt, userMessage, retrievedContext);
+      console.log('Provider: Gemini — Fallback success');
+      return { reply, provider: 'gemini' };
+    } catch (geminiErr) {
+      console.error(`Gemini fallback failed (${geminiErr.code}): ${geminiErr.message}`);
+      throw geminiErr;
+    }
   }
 }
 
@@ -398,25 +567,29 @@ export default async function handler(req, res) {
     // Search knowledge base
     const retrievedChunks = await searchKnowledge(client, userMessage);
 
-    // Extract sources for response
+    // Extract sources for response (hidden from customer in frontend)
     const sources = retrievedChunks.map(chunk => ({
       source_file: chunk.source_file,
       section_heading: chunk.section_heading
     }));
 
-    // Call OpenRouter API
+    // Call LLM with fallback support
     let reply;
+    let provider = 'unknown';
     try {
-      reply = await callOpenRouter(systemPrompt, userMessage, retrievedChunks);
+      const result = await callLLMWithFallback(systemPrompt, userMessage, retrievedChunks);
+      reply = result.reply;
+      provider = result.provider;
     } catch (err) {
-      console.error('OpenRouter error:', err.message);
+      console.error('LLM call failed (all providers exhausted):', err.message);
       return res.status(500).json({ error: 'Service temporarily unavailable' });
     }
 
     // Success response
     return res.status(200).json({
       reply,
-      sources
+      sources,
+      _provider: provider  // Internal logging (prefixed with _ to indicate internal)
     });
   } catch (err) {
     console.error('Chat handler error:', err.message);

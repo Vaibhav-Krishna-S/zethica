@@ -472,7 +472,7 @@ class ZethicaChatWidget {
    * Add a user or assistant message to the chat
    * @param {string} sender - 'user', 'assistant', or 'system'
    * @param {string} text - Message text
-   * @param {Array} sources - Optional array of {source_file, section_heading}
+   * @param {Array} sources - Optional array of {source_file, section_heading} (hidden from customer view)
    */
   addMessage(sender, text, sources = []) {
     const msgEl = document.createElement('div');
@@ -485,35 +485,10 @@ class ZethicaChatWidget {
 
     msgEl.appendChild(contentDiv);
 
-    // Add sources if present
-    if (sources && sources.length > 0) {
-      const sourcesDiv = document.createElement('div');
-      sourcesDiv.className = 'zcw-sources';
-
-      const labelDiv = document.createElement('div');
-      labelDiv.className = 'zcw-sources-label';
-      labelDiv.textContent = '📄 Sources:';
-      sourcesDiv.appendChild(labelDiv);
-
-      sources.forEach(source => {
-        const sourceDiv = document.createElement('div');
-        sourceDiv.className = 'zcw-source';
-
-        const fileSpan = document.createElement('strong');
-        fileSpan.textContent = source.source_file || 'Document';
-        sourceDiv.appendChild(fileSpan);
-
-        if (source.section_heading) {
-          const sectionSpan = document.createElement('span');
-          sectionSpan.textContent = source.section_heading;
-          sourceDiv.appendChild(sectionSpan);
-        }
-
-        sourcesDiv.appendChild(sourceDiv);
-      });
-
-      msgEl.appendChild(sourcesDiv);
-    }
+    // NOTE: Sources are intentionally NOT displayed to customers
+    // Sources are used internally for RAG grounding and answer verification
+    // but are hidden from the customer-facing interface in production
+    // Development note: Sources array is still received and can be logged for debugging
 
     this.messagesContainerEl.appendChild(msgEl);
     this.scrollMessagesToBottom();

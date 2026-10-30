@@ -582,7 +582,7 @@
     /* Full viewport on mobile */
     position: fixed;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     max-width: none;
     max-height: none;
     bottom: 0;
@@ -590,7 +590,7 @@
     top: 0;
     left: 0;
     border-radius: 0;
-    transform: translateY(100vh) scale(1);
+    transform: translateY(100dvh) scale(1);
   }
 
   .zcw-container.zcw-open .zcw-panel {
@@ -622,13 +622,14 @@
   .zcw-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: 8px 8px;
     gap: 10px;
   }
 
   /* Ensure input area is always visible at bottom */
   .zcw-input-area {
-    padding: 8px 10px 12px 10px;
+    padding: 6px 8px 8px 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
     border-top: 1px solid var(--zcw-border);
     flex-shrink: 0;
     position: relative;
@@ -665,7 +666,7 @@
   .zcw-user .zcw-message-text,
   .zcw-message.zcw-assistant .zcw-message-text,
   .zcw-sources {
-    max-width: 85%;
+    max-width: 95%;
   }
 
   .zcw-quick-actions {
